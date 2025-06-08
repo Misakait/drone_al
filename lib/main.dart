@@ -1,9 +1,11 @@
 import 'package:amap_map/amap_map.dart';
-import 'package:drone_manager/pages/HomePage.dart';
-import 'package:drone_manager/pages/ProfilePage.dart';
+import 'package:drone_al/pages/HomePage.dart';
+import 'package:drone_al/pages/ProfilePage.dart';
+
 import 'package:flutter/material.dart';
 import 'package:x_amap_base/x_amap_base.dart';
 import 'config/AmapConfig.dart';
+
 
 void main() {
   runApp(const MyApp());
