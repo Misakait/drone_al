@@ -12,8 +12,8 @@ class ShowMapPageBody extends StatefulWidget {
 
 class _ShowMapPageState extends State<ShowMapPageBody> {
   static final CameraPosition _kInitialPosition = const CameraPosition(
-    target: LatLng(39.909187, 116.397451),
-    zoom: 10.0,
+    target: LatLng(22.533719, 113.936091),
+    zoom: 18.0,
   );
   @override
   Widget build(BuildContext context) {
