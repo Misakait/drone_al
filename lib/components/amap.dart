@@ -22,6 +22,15 @@ class _ShowMapPageState extends State<ShowMapPageBody> {
     LatLng(31.1, 121.2),
     LatLng(31.2, 122.5),
   ];
+  // 为每个轨迹点生成一个Marker
+  Set<Marker> get _markers => _trackPoints
+      .asMap()
+      .entries
+      .map((entry) => Marker(
+            position: entry.value,
+            infoWindow: InfoWindow(title: '点${entry.key + 1}'),
+          ))
+      .toSet();
   // 地图控制器
   late AMapController _mapController;
   // 是否正在加载数据
@@ -74,13 +83,14 @@ class _ShowMapPageState extends State<ShowMapPageBody> {
       polylines: _trackPoints.isNotEmpty
           ? {
               Polyline(
-                // polylineId: PolylineId('track'), // 轨迹线ID
                 points: _trackPoints, // 轨迹点列表
                 color: Colors.blue, // 轨迹线颜色
                 width: 5, // 轨迹线宽度
               ),
             }
           : {},
+      // 添加每个点的marker
+      markers: _markers,
     );
 
     // 页面布局，加载时显示进度条，加载完成显示地图
