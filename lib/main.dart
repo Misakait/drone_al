@@ -1,5 +1,6 @@
 import 'package:amap_map/amap_map.dart';
 import 'package:drone_al/pages/HomePage.dart';
+import 'package:drone_al/pages/ReportPage.dart';
 import 'package:drone_al/pages/ProfilePage.dart';
 import 'package:flutter/material.dart';
 import 'config/AmapConfig.dart';
@@ -40,8 +41,8 @@ class _BottomNavPageState extends State<BottomNavPage> {
   static final List<Widget> _pages = [
     // 首页
     const HomePage(),
-    // 发现页
-    // const DiscoveryPage(),
+    // 报告页
+    const ReportPage(),
     // // 消息页
     // const MessagePage(),
     // 我的页面
@@ -50,6 +51,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
 // 与页面列表对应的标题列表
   static const List<String> _pageTitles = [
     '首页',       // 对应 HomePage 的标题
+    '报告',
     '我的',       // 对应 ProfilePage 的标题
   ];
   // 底部导航栏项目
@@ -59,11 +61,11 @@ class _BottomNavPageState extends State<BottomNavPage> {
       activeIcon: Icon(Icons.home),
       label: '首页',
     ),
-    // BottomNavigationBarItem(
-    //   icon: Icon(Icons.explore_outlined),
-    //   activeIcon: Icon(Icons.explore),
-    //   label: '发现',
-    // ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.explore_outlined),
+      activeIcon: Icon(Icons.explore),
+      label: '报告',
+    ),
     // BottomNavigationBarItem(
     //   icon: Icon(Icons.message_outlined),
     //   activeIcon: Icon(Icons.message),
@@ -89,7 +91,10 @@ class _BottomNavPageState extends State<BottomNavPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(_pageTitles[_selectedIndex]),
       ),
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
@@ -103,29 +108,6 @@ class _BottomNavPageState extends State<BottomNavPage> {
 }
 
 
-// // 发现页
-// // class DiscoveryPage extends StatelessWidget {
-// //   const DiscoveryPage({super.key});
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     return Center(
-// //       child: Column(
-// //         mainAxisAlignment: MainAxisAlignment.center,
-// //         children: <Widget>[
-// //           const Icon(Icons.explore, size: 80, color: Colors.orange),
-// //           const SizedBox(height: 20),
-// //           Text(
-// //             '发现',
-// //             style: Theme.of(context).textTheme.headlineMedium,
-// //           ),
-// //           const SizedBox(height: 20),
-// //           const Text('探索更多精彩内容'),
-// //         ],
-// //       ),
-// //     );
-// //   }
-// // }
-//
 // // // 消息页
 // // class MessagePage extends StatelessWidget {
 // //   const MessagePage({super.key});
@@ -150,4 +132,3 @@ class _BottomNavPageState extends State<BottomNavPage> {
 // // }
 //
 // // 我的页面
-
