@@ -83,6 +83,28 @@ class _ReportPageState extends State<ReportPage> {
     await _loadReports();
   }
 
+  // 清空所有报告数据
+  Future<void> _deleteAllReports() async {
+    try {
+      final response = await _dio.delete('http://115.190.24.116:717/report_raw/delete_all');
+      if (response.statusCode == 200) {
+        // 删除成功后刷新列表
+        await _loadReports();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('所有报告已清空')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('清空失败：${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('清空失败：$e')),
+      );
+    }
+  }
+
   // 展示报告详情弹窗，包括图片展示
   void _showDetailDialog(Map<String, dynamic> report) {
     showDialog(
@@ -196,14 +218,27 @@ class _ReportPageState extends State<ReportPage> {
                   },
                 ),
               ),
-        // 右下角刷新按钮
+        // 右下角刷新按钮和清空按钮
         Positioned(
           bottom: 24,
           right: 24,
-          child: FloatingActionButton(
-            onPressed: _refreshReports,
-            child: const Icon(Icons.refresh),
-            tooltip: '刷新报告',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                onPressed: _refreshReports,
+                child: const Icon(Icons.refresh),
+                tooltip: '刷新报告',
+              ),
+              const SizedBox(height: 16),
+              FloatingActionButton(
+                onPressed: _deleteAllReports,
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.delete),
+                tooltip: '清空所有报告',
+              ),
+            ],
           ),
         ),
       ],
