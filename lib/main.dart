@@ -7,6 +7,7 @@ import 'config/AmapConfig.dart';
 
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); // ← 必须加
   runApp(const MyApp());
 }
 
@@ -43,8 +44,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
     const HomePage(),
     // 报告页
     const ReportPage(),
-    // // 消息页
-    // const MessagePage(),
+    // 定位页面
     // 我的页面
     const ProfilePage(),
   ];
@@ -52,7 +52,8 @@ class _BottomNavPageState extends State<BottomNavPage> {
   static const List<String> _pageTitles = [
     '首页',       // 对应 HomePage 的标题
     '报告',
-    '我的',       // 对应 ProfilePage 的标题
+    '定位',       // 对应 LocationPage 的标题
+    '飞行报告'      // 对应 ProfilePage 的标题
   ];
   // 底部导航栏项目
   static const List<BottomNavigationBarItem> _navItems = [
@@ -66,15 +67,10 @@ class _BottomNavPageState extends State<BottomNavPage> {
       activeIcon: Icon(Icons.explore),
       label: '报告',
     ),
-    // BottomNavigationBarItem(
-    //   icon: Icon(Icons.message_outlined),
-    //   activeIcon: Icon(Icons.message),
-    //   label: '消息',
-    // ),
     BottomNavigationBarItem(
       icon: Icon(Icons.person_outline),
       activeIcon: Icon(Icons.person),
-      label: '我的',
+      label: '状态',
     ),
   ];
 

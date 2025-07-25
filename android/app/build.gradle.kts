@@ -43,3 +43,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // ...existing dependencies...
+//    implementation("com.amap.api:location:6.4.9")
+}
