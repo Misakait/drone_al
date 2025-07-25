@@ -311,6 +311,19 @@ class _ProfilePageState extends State<ProfilePage> {
    * 返回: 包含标题和折线图的卡片组件
    */
   Widget _buildChart(String title, List<FlSpot> data, Color color) {
+    // 根据图表类型设置不同的Y轴间隔
+    double getYAxisInterval(String chartTitle) {
+      if (chartTitle.contains('电池容量')) {
+        return 5.0;  // 电池容量：每5%一个刻度
+      } else if (chartTitle.contains('飞行高度')) {
+        return 10.0; // 飞行高度：每10米一个刻度
+      } else if (chartTitle.contains('距离风机')) {
+        return 10.0; // 距离风机：每10米一个刻度（您说的100可能太大了，改为10更合适）
+      } else {
+        return 1.0;  // 温度等其他：保持每1度一个刻度
+      }
+    }
+
     return Card(
       elevation: 4,  // 卡片阴影
       child: Padding(
@@ -342,7 +355,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         gridData: FlGridData(
                           show: true,              // 显示网格
                           drawVerticalLine: true,  // 显示垂直网格线
-                          horizontalInterval: 1,   // 水平网格线间隔
+                          horizontalInterval: getYAxisInterval(title), // 根据图表类型设置水平网格线间隔
                           verticalInterval: 1,     // 垂直网格线间隔
                           // 水平网格线样式
                           getDrawingHorizontalLine: (value) {
@@ -374,7 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: 30,  // 预留空间
-                              interval: 1,       // 标题间隔
+                              interval: 2,       // X轴标题间隔改为2，减少标签密度
                               getTitlesWidget: (value, meta) {
                                 return Container(
                                   margin: const EdgeInsets.only(top: 8),
@@ -394,18 +407,21 @@ class _ProfilePageState extends State<ProfilePage> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 1,
+                              interval: getYAxisInterval(title), // 使用对应的Y轴间隔
                               getTitlesWidget: (value, meta) {
-                                return Text(
-                                  value.toStringAsFixed(0),  // 显示整数值
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    value.toStringAsFixed(0),  // 显示整数值
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11, // 字体稍微小一点避免重叠
+                                    ),
                                   ),
                                 );
                               },
-                              reservedSize: 42,  // Y轴标题预留宽度
+                              reservedSize: 45,  // Y轴标题预留宽度增加一点
                             ),
                           ),
                         ),
@@ -417,9 +433,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         // ========== 坐标轴范围配置 ==========
                         minX: data.isEmpty ? 0 : data.first.x,  // X轴最小值
                         maxX: data.isEmpty ? 10 : data.last.x,   // X轴最大值
-                        // Y轴范围：最小值-1 到 最大值+1，增加上下边距
-                        minY: data.isEmpty ? 0 : data.map((e) => e.y).reduce((a, b) => a < b ? a : b) - 1,
-                        maxY: data.isEmpty ? 10 : data.map((e) => e.y).reduce((a, b) => a > b ? a : b) + 1,
+                        // Y轴范围：根据数据类型设置合适的范围
+                        minY: data.isEmpty ? 0 : _getMinY(data, title),
+                        maxY: data.isEmpty ? 10 : _getMaxY(data, title),
                         // ========== 折线数据配置 ==========
                         lineBarsData: [
                           LineChartBarData(
@@ -458,5 +474,51 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     );
+  }
+
+  /**
+   * 根据图表类型计算合适的Y轴最小值
+   */
+  double _getMinY(List<FlSpot> data, String title) {
+    if (data.isEmpty) return 0;
+
+    double minValue = data.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+
+    if (title.contains('电池容量')) {
+      // 电池容量：最小值向下取整到5的倍数
+      return (minValue / 5).floor() * 5.0;
+    } else if (title.contains('飞行高度')) {
+      // 飞行高度：最小值向下取整到10的倍数
+      return (minValue / 10).floor() * 10.0;
+    } else if (title.contains('距离风机')) {
+      // 距离风机：最小值向下取整到10的倍数
+      return (minValue / 10).floor() * 10.0;
+    } else {
+      // 温度：最小值向下取整
+      return minValue.floor().toDouble();
+    }
+  }
+
+  /**
+   * 根据图表类型计算合适的Y轴最大值
+   */
+  double _getMaxY(List<FlSpot> data, String title) {
+    if (data.isEmpty) return 10;
+
+    double maxValue = data.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+
+    if (title.contains('电池容量')) {
+      // 电池容量：最大值向上取整到5的倍数，最少到100
+      return ((maxValue / 5).ceil() * 5.0).clamp(100, double.infinity);
+    } else if (title.contains('飞行高度')) {
+      // 飞行高度：最大值向上取整到10的倍数
+      return (maxValue / 10).ceil() * 10.0 + 10; // 额外加10米留白
+    } else if (title.contains('距离风机')) {
+      // 距离风机：最大值向上取整到10的倍数
+      return (maxValue / 10).ceil() * 10.0 + 10; // 额外加10米留白
+    } else {
+      // 温度：最大值向上取整，额外加2度留白
+      return maxValue.ceil().toDouble() + 2;
+    }
   }
 }
