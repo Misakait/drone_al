@@ -147,20 +147,20 @@ class _ProfilePageState extends State<ProfilePage> {
       // X轴使用数据点索引，Y轴使用实际数值
       final x = dataPointIndex.toDouble();
 
-      // 电池容量数据 - 限制最多50个数据点
-      if (batteryData.length >= 50) batteryData.removeAt(0);
+      // 电池容量数据 - 限制最多10个数据点
+      if (batteryData.length >= 10) batteryData.removeAt(0);
       batteryData.add(FlSpot(x, batteryCapacity));
 
-      // 温度数据 - 限制最多50个数据点
-      if (temperatureData.length >= 50) temperatureData.removeAt(0);
+      // 温度数据 - 限制最多10个数据点
+      if (temperatureData.length >= 10) temperatureData.removeAt(0);
       temperatureData.add(FlSpot(x, cabinTemperature));
 
-      // 高度数据 - 限制最多50个数据点
-      if (altitudeData.length >= 50) altitudeData.removeAt(0);
+      // 高度数据 - 限制最多10个数据点
+      if (altitudeData.length >= 10) altitudeData.removeAt(0);
       altitudeData.add(FlSpot(x, aircraftAltitude));
 
-      // 距离数据 - 限制最多50个数据点
-      if (distanceData.length >= 50) distanceData.removeAt(0);
+      // 距离数据 - 限制最多10个数据点
+      if (distanceData.length >= 10) distanceData.removeAt(0);
       distanceData.add(FlSpot(x, distanceToFan));
 
       // 递增数据点索引
@@ -183,7 +183,7 @@ class _ProfilePageState extends State<ProfilePage> {
       // 应用栏配置
       appBar: AppBar(
         title: const Text('飞行报告'),
-        backgroundColor: Colors.blue[600],
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         foregroundColor: Colors.white,
         actions: [
           // 连接状态指示器

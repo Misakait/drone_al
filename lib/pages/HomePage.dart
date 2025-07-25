@@ -8,20 +8,26 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          // const Icon(Icons.home, size: 80, color: Colors.blue),
-          // const SizedBox(height: 20),
-          Expanded(child: ShowMapPageBody()),
-          // Text(
-          //   '首页',
-          //   style: Theme.of(context).textTheme.headlineMedium,
-          // ),
-          // const SizedBox(height: 20),
-          // const Text('这里是首页内容区域'),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text("主页"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            // const Icon(Icons.home, size: 80, color: Colors.blue),
+            // const SizedBox(height: 20),
+            Expanded(child: ShowMapPageBody()),
+            // Text(
+            //   '首页',
+            //   style: Theme.of(context).textTheme.headlineMedium,
+            // ),
+            // const SizedBox(height: 20),
+            // const Text('这里是首页内容区域'),
+          ],
+        ),
       ),
     );
   }

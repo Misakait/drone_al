@@ -52,8 +52,8 @@ class _BottomNavPageState extends State<BottomNavPage> {
   static const List<String> _pageTitles = [
     '首页',       // 对应 HomePage 的标题
     '报告',
-    '定位',       // 对应 LocationPage 的标题
-    '飞行报告'      // 对应 ProfilePage 的标题
+    '飞行报告',       // 对应 LocationPage 的标题
+    // '飞行报告'      // 对应 ProfilePage 的标题
   ];
   // 底部导航栏项目
   static const List<BottomNavigationBarItem> _navItems = [
@@ -83,10 +83,10 @@ class _BottomNavPageState extends State<BottomNavPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(_pageTitles[_selectedIndex]),
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      //   title: Text(_pageTitles[_selectedIndex]),
+      // ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,

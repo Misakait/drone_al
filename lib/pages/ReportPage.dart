@@ -48,7 +48,10 @@ class _ReportPageState extends State<ReportPage> {
             if (item['photoPath'] != null && item['photoPath'].isNotEmpty) {
               String photoPath = item['photoPath'];
               // 支持多张图片，按逗号分割
-              List<String> paths = photoPath.split(',').map((path) => path.trim()).toList();
+              List<String> paths = photoPath
+                  .split(',')
+                  .map((path) => path.trim())
+                  .toList();
               imagePaths = paths.where((path) => path.isNotEmpty).map((path) {
                 // 拼接图片完整访问地址
                 return 'http://115.190.24.116:2007$path';
@@ -86,22 +89,24 @@ class _ReportPageState extends State<ReportPage> {
   // 清空所有报告数据
   Future<void> _deleteAllReports() async {
     try {
-      final response = await _dio.delete('http://115.190.24.116:717/report_raw/delete_all');
+      final response = await _dio.delete(
+        'http://115.190.24.116:717/report_raw/delete_all',
+      );
       if (response.statusCode == 200) {
         // 删除成功后刷新列表
         await _loadReports();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('所有报告已清空')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('所有报告已清空')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('清空失败：${response.statusCode}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('清空失败：${response.statusCode}')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('清空失败：$e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('清空失败：$e')));
     }
   }
 
@@ -119,46 +124,52 @@ class _ReportPageState extends State<ReportPage> {
               // 展示报告详细内容
               Text(report['detail'] ?? ''),
               // 如果有图片则展示图片区域
-              if (report['imagePaths'] != null && report['imagePaths'].isNotEmpty) ...[
+              if (report['imagePaths'] != null &&
+                  report['imagePaths'].isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('相关图片:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  '相关图片:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 // 遍历所有图片路径并展示图片
-                ...report['imagePaths'].map<Widget>((imagePath) =>
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        imagePath,
-                        fit: BoxFit.cover,
-                        // 图片加载失败时显示错误图标
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 100,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: Icon(Icons.error, color: Colors.grey),
-                            ),
-                          );
-                        },
-                        // 图片加载中显示进度条
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 100,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        },
+                ...report['imagePaths']
+                    .map<Widget>(
+                      (imagePath) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            imagePath,
+                            fit: BoxFit.cover,
+                            // 图片加载失败时显示错误图标
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: 100,
+                                width: double.infinity,
+                                color: Colors.grey[300],
+                                child: const Center(
+                                  child: Icon(Icons.error, color: Colors.grey),
+                                ),
+                              );
+                            },
+                            // 图片加载中显示进度条
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 100,
+                                width: double.infinity,
+                                color: Colors.grey[300],
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ).toList(),
+                    )
+                    .toList(),
               ],
             ],
           ),
@@ -176,72 +187,89 @@ class _ReportPageState extends State<ReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // 加载中显示进度条，否则显示报告列表
-        _loading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _refreshReports,
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: reports.length,
-                  itemBuilder: (context, index) {
-                    final report = reports[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: ListTile(
-                        title: Text(report['title'] ?? ''), // 报告标题
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 展示报告摘要
-                            Text(report['summary'] ?? ''),
-                            // 如果有图片则提示"包含图片"
-                            if (report['imagePaths'] != null && report['imagePaths'].isNotEmpty)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 4),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.image, size: 16, color: Colors.grey),
-                                    SizedBox(width: 4),
-                                    Text('包含图片', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                  ],
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text("主页"),
+      ),
+      body: Stack(
+        children: [
+          // 加载中显示进度条，否则显示报告列表
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _refreshReports,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: reports.length,
+                    itemBuilder: (context, index) {
+                      final report = reports[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: ListTile(
+                          title: Text(report['title'] ?? ''), // 报告标题
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 展示报告摘要
+                              Text(report['summary'] ?? ''),
+                              // 如果有图片则提示"包含图片"
+                              if (report['imagePaths'] != null &&
+                                  report['imagePaths'].isNotEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 4),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.image,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '包含图片',
+                                        style: TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios), // 右侧箭头
+                          onTap: () => _showDetailDialog(report), // 点击展示详情弹窗
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios), // 右侧箭头
-                        onTap: () => _showDetailDialog(report), // 点击展示详情弹窗
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-        // 右下角刷新按钮和清空按钮
-        Positioned(
-          bottom: 24,
-          right: 24,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FloatingActionButton(
-                onPressed: _refreshReports,
-                child: const Icon(Icons.refresh),
-                tooltip: '刷新报告',
-              ),
-              const SizedBox(height: 16),
-              FloatingActionButton(
-                onPressed: _deleteAllReports,
-                backgroundColor: Colors.red,
-                child: const Icon(Icons.delete),
-                tooltip: '清空所有报告',
-              ),
-            ],
+          // 右下角刷新按钮和清空按钮
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  onPressed: _refreshReports,
+                  child: const Icon(Icons.refresh),
+                  tooltip: '刷新报告',
+                ),
+                const SizedBox(height: 16),
+                FloatingActionButton(
+                  onPressed: _deleteAllReports,
+                  backgroundColor: Colors.red,
+                  child: const Icon(Icons.delete),
+                  tooltip: '清空所有报告',
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
