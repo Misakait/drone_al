@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../components/amap.dart';
+import '../components/amap2.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

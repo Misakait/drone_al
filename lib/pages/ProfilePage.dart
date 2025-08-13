@@ -7,6 +7,8 @@
  * 4. 支持自动重连机制
  */
 
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';  // WebSocket通信库
@@ -64,7 +66,8 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       // 创建WebSocket连接
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://115.190.24.116:717/flight_ws'),
+        Uri.parse('ws://115.190.24.116:8080/flight_ws'),
+        // Uri.parse('ws://192.168.3.18:8080/flight_ws'),
       );
 
       // 更新连接状态为已连接
@@ -79,8 +82,13 @@ class _ProfilePageState extends State<ProfilePage> {
           try {
             // 解析JSON数据
             final jsonData = json.decode(data);
-            // 更新飞行数据
-            updateFlightData(jsonData);
+            log('接收到数据: $jsonData');
+            // 提取嵌套的飞行数据
+            final flightData = jsonData['data'];
+            if (flightData != null) {
+              // 更新飞行数据
+              updateFlightData(flightData);
+            }
           } catch (e) {
             print('解析数据错误: $e');
           }
@@ -136,6 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
    */
   void updateFlightData(Map<String, dynamic> data) {
     setState(() {
+      // log(data['battery_capacity']); // 这一行会导致错误，因为当键不存在时，值为null
       // 更新实时数据，使用??操作符提供默认值防止null
       batteryCapacity = (data['battery_capacity'] ?? 0.0).toDouble();
       estimatedTime = (data['estimated_remaining_usage_time'] ?? 0.0).toDouble();
