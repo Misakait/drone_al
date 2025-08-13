@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -66,6 +67,9 @@ class _ReportPageState extends State<ReportPage> {
               'detail': item['detail'] ?? '',
               'createdAt': item['createdAt'],
               'imagePaths': imagePaths,
+              'damage': (item['damage'] ?? 0.0).toDouble(),
+              'rust': (item['rust'] ?? 0.0).toDouble(),
+              'covering': (item['covering'] ?? 0.0).toDouble(),
             };
           }).toList();
         });
@@ -110,7 +114,61 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
-  // 展示报告详情弹窗，包括图片展示
+  // 创建饼图组件
+  Widget _buildPieChart(String title, double value, Color color) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16), // 增加标题和图表之间的间距
+        SizedBox(
+          height: 120,
+          width: 120,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 30,
+              sections: [
+                PieChartSectionData(
+                  value: value * 100,
+                  color: color,
+                  title: '${(value * 100).toStringAsFixed(1)}%',
+                  radius: 45,
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                PieChartSectionData(
+                  value: (1 - value) * 100,
+                  color: Colors.grey[300]!,
+                  title: '',
+                  radius: 45,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // const SizedBox(height: 8), // 增加图表和百分比文字之间的间距
+        // Text(
+        //   '${(value * 100).toStringAsFixed(1)}%',
+        //   style: TextStyle(
+        //     fontSize: 14,
+        //     color: color,
+        //     fontWeight: FontWeight.w600,
+        //   ),
+        // ),
+      ],
+    );
+  }
+
+  // 展示报告详情弹窗，包括图片展示和数据饼图
   void _showDetailDialog(Map<String, dynamic> report) {
     showDialog(
       context: context,
@@ -123,10 +181,51 @@ class _ReportPageState extends State<ReportPage> {
             children: [
               // 展示报告详细内容
               Text(report['detail'] ?? ''),
+              const SizedBox(height: 16),
+
+              // 数据分析饼图区域
+              const Text(
+                '数据分析:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // 三个饼图垂直排列
+              Column(
+                children: [
+                  Center(
+                    child: _buildPieChart(
+                      '损坏程度',
+                      report['damage'] ?? 0.0,
+                      Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: _buildPieChart(
+                      '锈蚀程度',
+                      report['rust'] ?? 0.0,
+                      Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: _buildPieChart(
+                      '覆盖程度',
+                      report['covering'] ?? 0.0,
+                      Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+
               // 如果有图片则展示图片区域
               if (report['imagePaths'] != null &&
                   report['imagePaths'].isNotEmpty) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 const Text(
                   '相关图片:',
                   style: TextStyle(fontWeight: FontWeight.bold),

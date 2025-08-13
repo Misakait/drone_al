@@ -46,7 +46,7 @@ class _ShowMapPageState extends State<ShowMapPageBody> {
   void _connectToSSE() async {
     try {
       _httpClient = http.Client();
-      final request = http.Request('GET', Uri.parse('http://192.168.3.18:3001/sse/location'));
+      final request = http.Request('GET', Uri.parse('http://115.190.24.116:3001/sse/location'));
       request.headers['Accept'] = 'text/event-stream';
       request.headers['Cache-Control'] = 'no-cache';
 
