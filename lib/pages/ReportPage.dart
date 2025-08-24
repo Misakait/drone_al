@@ -33,6 +33,7 @@ class _ReportPageState extends State<ReportPage> {
     try {
       // 调用后端接口获取原始报告数据
       final response = await _dio.get('http://115.190.24.116:717/report_raw');
+      // final response = await _dio.get('http://192.168.3.18:717/report_raw');
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         setState(() {
@@ -70,6 +71,7 @@ class _ReportPageState extends State<ReportPage> {
               'damage': (item['damage'] ?? 0.0).toDouble(),
               'rust': (item['rust'] ?? 0.0).toDouble(),
               'covering': (item['covering'] ?? 0.0).toDouble(),
+              'ai_report': item['ai_report'] ?? '',
             };
           }).toList();
         });
@@ -270,6 +272,9 @@ class _ReportPageState extends State<ReportPage> {
                     )
                     .toList(),
               ],
+              const SizedBox(height: 16),
+              Text("AI分析报告:"),
+              Text(report['ai_report'] ?? ''),
             ],
           ),
         ),

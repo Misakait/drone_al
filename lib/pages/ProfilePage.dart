@@ -38,12 +38,14 @@ class _ProfilePageState extends State<ProfilePage> {
   double cabinTemperature = 0.0;   // 舱内温度（摄氏度）
   double aircraftAltitude = 0.0;   // 飞行器高度（米）
   double distanceToFan = 0.0;      // 距离风机的距离（米）
+  double airPressure = 0.0;      // 气压（帕斯卡）
 
   // ========== 历史数据用于图表绘制 ==========
   List<FlSpot> batteryData = [];      // 电池容量历史数据点
   List<FlSpot> temperatureData = [];  // 温度历史数据点
   List<FlSpot> altitudeData = [];     // 高度历史数据点
   List<FlSpot> distanceData = [];     // 距离历史数据点
+  List<FlSpot> pressureData = [];     // 气压历史数据点
 
   // 数据点索引，用于X轴坐标
   int dataPointIndex = 0;
@@ -151,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
       cabinTemperature = (data['cabin_temperature'] ?? 0.0).toDouble();
       aircraftAltitude = (data['aircraft_altitude'] ?? 0.0).toDouble();
       distanceToFan = (data['distance_to_fan'] ?? 0.0).toDouble();
-
+      airPressure = (data['air_pressure'] ?? 0.0).toDouble();
       // 添加数据到历史记录用于图表展示
       // X轴使用数据点索引，Y轴使用实际数值
       final x = dataPointIndex.toDouble();
@@ -172,6 +174,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (distanceData.length >= 10) distanceData.removeAt(0);
       distanceData.add(FlSpot(x, distanceToFan));
 
+      // 气压数据 - 限制最多10个数据点
+      if (pressureData.length >= 10) pressureData.removeAt(0);
+      pressureData.add(FlSpot(x, airPressure));
       // 递增数据点索引
       dataPointIndex++;
     });
@@ -243,7 +248,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     _buildDataRow('预计剩余时间', '${estimatedTime.toStringAsFixed(1)}分钟', Icons.timer),
                     _buildDataRow('舱内温度', '${cabinTemperature.toStringAsFixed(1)}°C', Icons.thermostat),
                     _buildDataRow('飞行高度', '${aircraftAltitude.toStringAsFixed(1)}m', Icons.flight_takeoff),
-                    _buildDataRow('距离风机', '${distanceToFan.toStringAsFixed(1)}m', Icons.location_on),
+                    _buildDataRow('距离风机', '${distanceToFan.toStringAsFixed(1)}mm', Icons.location_on),
+                    _buildDataRow('气压', '${airPressure.toStringAsFixed(1)}Pa', Icons.speed)
                   ],
                 ),
               ),
@@ -267,13 +273,19 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 20),
 
             // ========== 距离趋势图 ==========
-            _buildChart('距离风机趋势 (m)', distanceData, Colors.orange),
+            _buildChart('距离风机趋势 (mm)', distanceData, Colors.orange),
+
+            const SizedBox(height: 20),
+
+            // ========== 气压趋势图 ==========
+            _buildChart('气压趋势 (Pa)', pressureData, Colors.purple),
           ],
         ),
       ),
     );
   }
 
+  
   /**
    * 构建数据行组件
    * 参数:
@@ -327,7 +339,7 @@ class _ProfilePageState extends State<ProfilePage> {
       } else if (chartTitle.contains('飞行高度')) {
         return 10.0; // 飞行高度：每10米一个刻度
       } else if (chartTitle.contains('距离风机')) {
-        return 10.0; // 距离风机：每10米一个刻度（您说的100可能太大了，改为10更合适）
+        return 10.0; // 距离风机：每10米一个刻度
       } else {
         return 1.0;  // 温度等其他：保持每1度一个刻度
       }
