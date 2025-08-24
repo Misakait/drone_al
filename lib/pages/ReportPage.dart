@@ -9,7 +9,8 @@ class ReportPage extends StatefulWidget {
   State<ReportPage> createState() => _ReportPageState();
 }
 
-class _ReportPageState extends State<ReportPage> {
+class _ReportPageState extends State<ReportPage>
+    with TickerProviderStateMixin { // 添加动画混入类，支持多个动画控制器
   // 保存报告列表数据
   List<Map<String, dynamic>> reports = [];
   // 加载状态标记
@@ -17,11 +18,91 @@ class _ReportPageState extends State<ReportPage> {
   // Dio实例用于网络请求
   final Dio _dio = Dio();
 
+  // 动画控制器声明
+  late AnimationController _listAnimationController; // 列表项动画控制器
+  late AnimationController _pieChartAnimationController; // 饼图动画控制器
+  late AnimationController _loadingAnimationController; // 加载动画控制器
+  late AnimationController _fabAnimationController; // 浮动按钮动画控制器
+
+  // 动画声明
+  late Animation<double> _fadeAnimation; // 淡入动画
+  late Animation<Offset> _slideAnimation; // 滑动动画
+  late Animation<double> _scaleAnimation; // 缩放动画
+  late Animation<double> _rotationAnimation; // 旋转动画
+
   @override
   void initState() {
     super.initState();
+
+    // 初始化动画控制器
+    _listAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 800), // 列表动画持续时间
+      vsync: this,
+    );
+
+    _pieChartAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1200), // 饼图动画持续时间
+      vsync: this,
+    );
+
+    _loadingAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500), // 加载动画持续时间
+      vsync: this,
+    );
+
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300), // 浮动按钮动画持续时间
+      vsync: this,
+    );
+
+    // 初始化动画
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _listAnimationController,
+      curve: Curves.easeInOut, // 使用缓动曲线
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5), // 从下方滑入
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _listAnimationController,
+      curve: Curves.elasticOut, // 使用弹性曲线
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _listAnimationController,
+      curve: Curves.bounceOut, // 使用反弹曲线
+    ));
+
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _loadingAnimationController,
+      curve: Curves.linear,
+    ));
+
+    // 启动浮动按钮动画
+    _fabAnimationController.forward();
+
     // 页面初始化时加载报告数据
     _loadReports();
+  }
+
+  @override
+  void dispose() {
+    // 释放动画控制器资源
+    _listAnimationController.dispose();
+    _pieChartAnimationController.dispose();
+    _loadingAnimationController.dispose();
+    _fabAnimationController.dispose();
+    super.dispose();
   }
 
   // 从后端API获取报告数据
@@ -29,6 +110,9 @@ class _ReportPageState extends State<ReportPage> {
     setState(() {
       _loading = true;
     });
+
+    // 启动加载动画
+    _loadingAnimationController.repeat();
 
     try {
       // 调用后端接口获取原始报告数据
@@ -75,6 +159,9 @@ class _ReportPageState extends State<ReportPage> {
             };
           }).toList();
         });
+
+        // 数据加载完成后启动列表动画
+        _listAnimationController.forward();
       }
     } catch (e) {
       // 网络或解析异常处理
@@ -84,11 +171,16 @@ class _ReportPageState extends State<ReportPage> {
       setState(() {
         _loading = false;
       });
+
+      // 停止加载动画
+      _loadingAnimationController.stop();
     }
   }
 
   // 下拉刷新报告列表
   Future<void> _refreshReports() async {
+    // 重置动画状态
+    _listAnimationController.reset();
     await _loadReports();
   }
 
@@ -170,122 +262,365 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  // 展示报告详情弹窗，包括图片展示和数据饼图
+  // 展示带动画的报告详情弹窗
   void _showDetailDialog(Map<String, dynamic> report) {
-    showDialog(
+    // 重置饼图动画
+    _pieChartAnimationController.reset();
+
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(report['title'] ?? ''), // 报告标题
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 展示报告详细内容
-              Text(report['detail'] ?? ''),
-              const SizedBox(height: 16),
-
-              // 数据分析饼图区域
-              const Text(
-                '数据分析:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 400), // 自定义弹窗动画时长
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Container(); // 占位容器
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // 自定义弹窗转场动画
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1), // 从底部滑入
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.elasticOut, // 弹性曲线
+          )),
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.8,
+              end: 1.0,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutBack, // 回弹效果
+            )),
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16), // 圆角弹窗
               ),
-              const SizedBox(height: 12),
-
-              // 三个饼图垂直排列
-              Column(
-                children: [
-                  Center(
-                    child: _buildPieChart(
-                      '损坏程度',
-                      report['damage'] ?? 0.0,
-                      Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: _buildPieChart(
-                      '锈蚀程度',
-                      report['rust'] ?? 0.0,
-                      Colors.orange,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: _buildPieChart(
-                      '覆盖程度',
-                      report['covering'] ?? 0.0,
-                      Colors.blue,
-                    ),
-                  ),
-                ],
+              title: AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: Text(report['title'] ?? ''),
+                  );
+                },
               ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 报告详情带淡入动画
+                    AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) {
+                        return FadeTransition(
+                          opacity: Tween<double>(
+                            begin: 0.0,
+                            end: 1.0,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: const Interval(0.2, 1.0), // 延迟动画
+                          )),
+                          child: Text(report['detail'] ?? ''),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
-              // 如果有图片则展示图片区域
-              if (report['imagePaths'] != null &&
-                  report['imagePaths'].isNotEmpty) ...[
-                const SizedBox(height: 24),
-                const Text(
-                  '相关图片:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                // 遍历所有图片路径并展示图片
-                ...report['imagePaths']
-                    .map<Widget>(
-                      (imagePath) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            // 图片加载失败时显示错误图标
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 100,
-                                width: double.infinity,
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: Icon(Icons.error, color: Colors.grey),
-                                ),
-                              );
-                            },
-                            // 图片加载中显示进度条
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Container(
-                                height: 100,
-                                width: double.infinity,
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            },
+                    // 数据分析标题动画
+                    AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(-1, 0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: const Interval(0.3, 1.0),
+                          )),
+                          child: const Text(
+                            '数据分析:',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 三个饼图垂直排列，带动画效果
+                    Column(
+                      children: [
+                        Center(
+                          child: _buildPieChart(
+                            '损坏程度',
+                            report['damage'] ?? 0.0,
+                            Colors.red,
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: _buildPieChart(
+                            '锈蚀程度',
+                            report['rust'] ?? 0.0,
+                            Colors.orange,
+
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: _buildPieChart(
+                            '覆盖程度',
+                            report['covering'] ?? 0.0,
+                            Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // 图片区域带动画
+                    if (report['imagePaths'] != null &&
+                        report['imagePaths'].isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      AnimatedBuilder(
+                        animation: animation,
+                        builder: (context, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(1, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: const Interval(0.5, 1.0),
+                            )),
+                            child: const Text(
+                              '相关图片:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        },
                       ),
-                    )
-                    .toList(),
+                      const SizedBox(height: 8),
+                      ...report['imagePaths']
+                          .asMap()
+                          .entries
+                          .map<Widget>(
+                            (entry) {
+                              int imageIndex = entry.key;
+                              String imagePath = entry.value;
+
+                              return AnimatedBuilder(
+                                animation: animation,
+                                builder: (context, child) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: Offset(0, 0.5 * (imageIndex + 1)),
+                                      end: Offset.zero,
+                                    ).animate(CurvedAnimation(
+                                      parent: animation,
+                                      curve: Interval(
+                                        0.6 + imageIndex * 0.1,
+                                        1.0,
+                                      ),
+                                    )),
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          imagePath,
+                                          fit: BoxFit.cover,
+                                          // 图片加载失败时显示错误图标
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              height: 100,
+                                              width: double.infinity,
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: Icon(Icons.error, color: Colors.grey),
+                                              ),
+                                            );
+                                          },
+                                          // 图片加载中显示进度条
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              height: 100,
+                                              width: double.infinity,
+                                              color: Colors.grey[300],
+                                              child: const Center(
+                                                child: CircularProgressIndicator(),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          )
+                          .toList(),
+                    ],
+                    const SizedBox(height: 16),
+                    AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) {
+                        return FadeTransition(
+                          opacity: Tween<double>(
+                            begin: 0.0,
+                            end: 1.0,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: const Interval(0.8, 1.0),
+                          )),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text("AI分析报告:"),
+                              Text(report['ai_report'] ?? ''),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) {
+                    return ScaleTransition(
+                      scale: Tween<double>(
+                        begin: 0.0,
+                        end: 1.0,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: const Interval(0.9, 1.0),
+                      )),
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('关闭'),
+                      ),
+                    );
+                  },
+                ),
               ],
-              const SizedBox(height: 16),
-              Text("AI分析报告:"),
-              Text(report['ai_report'] ?? ''),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          // 关闭弹窗按钮
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
+        );
+      },
+    );
+
+    // 延迟启动饼图动画，等待弹窗完全显示
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _pieChartAnimationController.forward();
+    });
+  }
+
+  // 创建带动画的列表项
+  Widget _buildAnimatedListItem(Map<String, dynamic> report, int index) {
+    return AnimatedBuilder(
+      animation: _listAnimationController,
+      builder: (context, child) {
+        // 为每个列表项添加延迟动画
+        double delay = index * 0.1;
+        double animationValue = (_listAnimationController.value - delay).clamp(0.0, 1.0);
+
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0), // 从右侧滑入
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: _listAnimationController,
+            curve: Interval(delay, 1.0, curve: Curves.elasticOut),
+          )),
+          child: FadeTransition(
+            opacity: Tween<double>(
+              begin: 0.0,
+              end: 1.0,
+            ).animate(CurvedAnimation(
+              parent: _listAnimationController,
+              curve: Interval(delay, 1.0, curve: Curves.easeIn),
+            )),
+            child: Transform.scale(
+              scale: 0.8 + (0.2 * animationValue), // 缩放动画
+              child: Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                elevation: 4, // 增加阴影
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12), // 圆角卡片
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _showDetailDialog(report), // 点击展示详情弹窗
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            report['title'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(report['summary'] ?? ''),
+                          if (report['imagePaths'] != null &&
+                              report['imagePaths'].isNotEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.image,
+                                    size: 16,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '包含图片',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -294,62 +629,65 @@ class _ReportPageState extends State<ReportPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("主页"),
+        title: const Text("报告中心"),
+        elevation: 0, // 移除阴影
       ),
       body: Stack(
         children: [
-          // 加载中显示进度条，否则显示报告列表
+          // 添加渐变背景
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).colorScheme.inversePrimary.withOpacity(0.1),
+                  Colors.white,
+                ],
+              ),
+            ),
+          ),
+
+          // 主要内容区域
           _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                  child: AnimatedBuilder(
+                    animation: _rotationAnimation,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: _rotationAnimation.value * 2 * 3.14159, // 旋转动画
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            gradient: const LinearGradient(
+                              colors: [Colors.blue, Colors.purple],
+                            ),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                )
               : RefreshIndicator(
                   onRefresh: _refreshReports,
+                  color: Colors.blue,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: reports.length,
                     itemBuilder: (context, index) {
                       final report = reports[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: ListTile(
-                          title: Text(report['title'] ?? ''), // 报告标题
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // 展示报告摘要
-                              Text(report['summary'] ?? ''),
-                              // 如果有图片则提示"包含图片"
-                              if (report['imagePaths'] != null &&
-                                  report['imagePaths'].isNotEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 4),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.image,
-                                        size: 16,
-                                        color: Colors.grey,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        '包含图片',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: const Icon(Icons.arrow_forward_ios), // 右侧箭头
-                          onTap: () => _showDetailDialog(report), // 点击展示详情弹窗
-                        ),
-                      );
+                      return _buildAnimatedListItem(report, index);
                     },
                   ),
                 ),
-          // 右下角刷新按钮和清空按钮
           Positioned(
             bottom: 24,
             right: 24,
@@ -373,7 +711,19 @@ class _ReportPageState extends State<ReportPage> {
             ),
           ),
         ],
+
       ),
+
+      // 带动画的浮动操作按钮
+      // floatingActionButton: ScaleTransition(
+      //   scale: _fabAnimationController,
+      //   child: FloatingActionButton(
+      //     onPressed: _refreshReports,
+      //     child: const Icon(Icons.refresh, color: Colors.white),
+      //   ),
+      // ),
+      
     );
+    
   }
 }
